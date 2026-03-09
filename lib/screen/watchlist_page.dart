@@ -1,74 +1,43 @@
 import 'package:flutter/material.dart';
 import '../models/movie_model.dart';
+import 'moviel_list_page.dart';
 
-// Ini tempat nyimpen film yang dibookmark
-// Dibikin static biar bisa dipakai bareng di halaman lain
-class WatchlistStorage {
-  static final List<MovieModel> savedMovies = [];
-}
-
-class MovielListPage extends StatefulWidget {
-  final String nama;
-
-  const MovielListPage({super.key, required this.nama});
+class WatchlistPage extends StatefulWidget {
+  const WatchlistPage({super.key});
 
   @override
-  State<MovielListPage> createState() => _MovielListPageState();
+  State<WatchlistPage> createState() => _WatchlistPageState();
 }
 
-class _MovielListPageState extends State<MovielListPage> {
-  // Buat cek film ini sudah disimpan atau belum
-  bool isSaved(MovieModel movie) {
-    return WatchlistStorage.savedMovies.contains(movie);
-  }
-
-  // Buat nambah / hapus film dari watchlist
-  void toggleSaved(MovieModel movie) {
+class _WatchlistPageState extends State<WatchlistPage> {
+  // Buat hapus film dari watchlist
+  void removeFromWatchlist(MovieModel movie) {
     setState(() {
-      if (WatchlistStorage.savedMovies.contains(movie)) {
-        WatchlistStorage.savedMovies.remove(movie);
-      } else {
-        WatchlistStorage.savedMovies.add(movie);
-      }
+      WatchlistStorage.savedMovies.remove(movie);
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    // Ambil semua film yang sudah disimpan
+    final List<MovieModel> savedMovies = WatchlistStorage.savedMovies;
+
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Movie List'),
-        actions: [
-          // Tombol buat pindah ke halaman watchlist
-          IconButton(
-            onPressed: () {
-              Navigator.pushNamed(context, '/watchlist').then((_) {
-                // Setelah balik dari watchlist, halaman ini direfresh
-                setState(() {});
-              });
-            },
-            icon: const Icon(Icons.bookmark),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: const Text("Watchlist")),
       body: Padding(
         padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Sapaan buat user yang habis login
-            Text(
-              'Welcome, ${widget.nama}!',
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-
-            // Ini daftar semua film dari movieList
-            Expanded(
-              child: ListView.builder(
-                itemCount: movieList.length,
+        child: savedMovies.isEmpty
+            ? const Center(
+                // Kalau belum ada film yang disimpan
+                child: Text(
+                  "Belum ada film yang disimpan",
+                  style: TextStyle(fontSize: 16),
+                ),
+              )
+            : ListView.builder(
+                itemCount: savedMovies.length,
                 itemBuilder: (context, index) {
-                  final movie = movieList[index];
+                  final movie = savedMovies[index];
 
                   return Card(
                     margin: const EdgeInsets.only(bottom: 12),
@@ -77,7 +46,7 @@ class _MovielListPageState extends State<MovielListPage> {
                       padding: const EdgeInsets.all(10),
                       child: InkWell(
                         onTap: () async {
-                          // Klik item -> masuk ke halaman detail
+                          // Kalau item diklik, masuk ke halaman detail
                           await Navigator.pushNamed(
                             context,
                             '/movieDetail',
@@ -123,13 +92,10 @@ class _MovielListPageState extends State<MovielListPage> {
                                     ),
                                   ),
                                   const SizedBox(height: 4),
-
                                   Text('Tahun: ${movie.year}'),
                                   const SizedBox(height: 4),
-
                                   Text('Genre: ${movie.genre}'),
                                   const SizedBox(height: 8),
-
                                   Row(
                                     children: [
                                       const Icon(
@@ -143,21 +109,13 @@ class _MovielListPageState extends State<MovielListPage> {
                                   ),
                                   const SizedBox(height: 10),
 
-                                  // Tombol tambah / hapus daftar
+                                  // Tombol hapus dari daftar
                                   ElevatedButton.icon(
                                     onPressed: () {
-                                      toggleSaved(movie);
+                                      removeFromWatchlist(movie);
                                     },
-                                    icon: Icon(
-                                      isSaved(movie)
-                                          ? Icons.bookmark
-                                          : Icons.bookmark_border,
-                                    ),
-                                    label: Text(
-                                      isSaved(movie)
-                                          ? 'Hapus dari Daftar'
-                                          : 'Tambahkan ke Daftar',
-                                    ),
+                                    icon: const Icon(Icons.delete_outline),
+                                    label: const Text('Hapus dari Daftar'),
                                   ),
                                 ],
                               ),
@@ -169,9 +127,6 @@ class _MovielListPageState extends State<MovielListPage> {
                   );
                 },
               ),
-            ),
-          ],
-        ),
       ),
     );
   }
